@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { version } from "./package.json";
+
 import chalk from "chalk";
 import { downloadYoutubeAudio } from "./commands/youtube";
 
@@ -9,7 +11,7 @@ const program = new Command();
 program
   .name("nebula-fetch")
   .description("CLI tool for downloading media from different platforms")
-  .version("1.0.0");
+  .version(version);
 
 program
   .command("youtube")
