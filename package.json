@@ -1,8 +1,10 @@
 {
   "name": "@lunarity/nebula-fetch-cli",
+  "version": "0.0.1",
   "module": "index.ts",
   "description": "CLI tool for downloading media from different platforms",
   "type": "module",
+  "main": "dist/index.js",
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -15,10 +17,10 @@
     "commander": "^12.1.0"
   },
   "bin": {
-    "nebula-fetch": "./index.ts"
+    "nebula-fetch": "./dist/index.js"
   },
   "scripts": {
-    "build": "bun build ./index.ts --compile --outfile nebula-fetch",
+    "build": "bun build ./index.ts --outdir ./dist --target node && chmod +x ./dist/index.js",
     "dev": "bun index.ts",
     "prepublish": "bun run build"
   }

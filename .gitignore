@@ -181,3 +181,6 @@ dist
 *.webm
 *.ogg
 *.wav
+
+# build
+dist
