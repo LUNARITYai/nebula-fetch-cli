@@ -23,5 +23,10 @@
     "build": "bun build ./index.ts --outdir ./dist --target node && chmod +x ./dist/index.js",
     "dev": "bun index.ts",
     "prepublish": "bun run build"
-  }
+  },
+  "keywords": [
+    "cli",
+    "media",
+    "download"
+  ]
 }
