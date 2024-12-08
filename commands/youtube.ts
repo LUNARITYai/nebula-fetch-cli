@@ -4,11 +4,15 @@ import path from "path";
 import { YtdlCore, toPipeableStream } from "@ybd-project/ytdl-core";
 import chalk from "chalk";
 
-export async function downloadYoutube(
-  url: string,
-  onlyAudio: boolean = false,
-  outputPath?: string
-): Promise<void> {
+interface DownloadOptions {
+  url: string;
+  audioOnly?: boolean;
+  verbose?: boolean;
+  outputPath?: string;
+}
+
+export async function downloadYoutube(options: DownloadOptions): Promise<void> {
+  const { url, audioOnly = false, verbose = false, outputPath } = options;
   try {
     if (!url) {
       throw new Error("Please provide a YouTube URL");
@@ -19,16 +23,26 @@ export async function downloadYoutube(
     let videoTitle = "";
 
     await ytdl.getBasicInfo(url).then((info) => {
+      console.log(chalk.cyan(`🎥 Video title: ${info.videoDetails.title}`));
+      console.log(
+        chalk.cyan(
+          `🎥 Video author: ${info.videoDetails.author?.name || "Unknown"}`
+        )
+      );
+      if (verbose) {
+        console.log(JSON.stringify(info.videoDetails, null, 2));
+      }
       videoTitle = info.videoDetails.title.replace(/[^\w\s]/gi, "_");
     });
 
     const stream = await ytdl.download(url, {
-      filter: onlyAudio ? "audioonly" : undefined,
+      filter: audioOnly ? "audioonly" : "videoandaudio",
+      quality: "highest",
     });
 
     const outputFilePath =
       outputPath ||
-      path.join(process.cwd(), `${videoTitle}.${onlyAudio ? "mp3" : "mp4"}`);
+      path.join(process.cwd(), `${videoTitle}.${audioOnly ? "mp3" : "mp4"}`);
     toPipeableStream(stream).pipe(fs.createWriteStream(outputFilePath));
 
     console.log(chalk.cyan(`✅ Download finished: ${outputFilePath}`));

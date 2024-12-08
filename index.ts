@@ -20,10 +20,16 @@ program
   .argument("<url>", "URL of the video")
   .option("-o, --output <path>", "Output path for the video")
   .option("-a, --audio", "Download only the audio", false)
+  .option("-v, --verbose", "Show verbose output", false)
   .action(async (url, options) => {
     try {
       console.log(chalk.blue(`Downloading video from: ${url}`));
-      await downloadYoutube(url, options.audio, options.output);
+      await downloadYoutube({
+        url,
+        onlyAudio: options.audio,
+        outputPath: options.output,
+        verbose: options.verbose,
+      });
     } catch (error) {
       console.error(chalk.red("Error:"), error);
       process.exit(1);
