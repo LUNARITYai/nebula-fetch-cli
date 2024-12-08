@@ -27,6 +27,13 @@
   "keywords": [
     "cli",
     "media",
-    "download"
-  ]
+    "download",
+    "youtube"
+  ],
+  "author": "Krzysztof Oszczapiński",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LUNARITYai/nebula-fetch-cli.git"
+  }
 }

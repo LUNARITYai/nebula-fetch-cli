@@ -26,7 +26,7 @@ program
       console.log(chalk.blue(`Downloading video from: ${url}`));
       await downloadYoutube({
         url,
-        onlyAudio: options.audio,
+        audioOnly: options.audio,
         outputPath: options.output,
         verbose: options.verbose,
       });
