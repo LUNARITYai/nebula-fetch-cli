@@ -13,6 +13,7 @@ interface DownloadOptions {
 
 export async function downloadYoutube(options: DownloadOptions): Promise<void> {
   const { url, audioOnly = false, verbose = false, outputPath } = options;
+
   try {
     if (!url) {
       throw new Error("Please provide a YouTube URL");

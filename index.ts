@@ -4,7 +4,8 @@ import { Command } from "commander";
 import { version } from "./package.json";
 
 import chalk from "chalk";
-import { downloadYoutube } from "./commands/youtube";
+
+import { downloadYoutube } from "@/commands/youtube";
 
 const program = new Command();
 
