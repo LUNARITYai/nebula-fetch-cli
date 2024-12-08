@@ -1,6 +1,6 @@
 {
   "name": "@lunarity/nebula-fetch-cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "module": "index.ts",
   "description": "CLI tool for downloading media from different platforms",
   "type": "module",
@@ -27,6 +27,13 @@
   "keywords": [
     "cli",
     "media",
-    "download"
-  ]
+    "download",
+    "youtube"
+  ],
+  "author": "Krzysztof Oszczapiński",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LUNARITYai/nebula-fetch-cli.git"
+  }
 }
