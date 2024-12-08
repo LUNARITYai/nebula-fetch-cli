@@ -6,7 +6,7 @@ import { version } from "@/package.json";
 import chalk from "chalk";
 
 import { downloadYoutube } from "@/commands/youtube";
-import { isValidYoutubeUrl } from "./utils/validators";
+import { isValidYoutubeUrl } from "@/utils/validators";
 
 const program = new Command();
 
