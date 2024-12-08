@@ -34,7 +34,11 @@ program
         process.exit(1);
       }
 
-      console.log(chalk.blue(`🚀 Downloading video from: ${url}`));
+      console.log(
+        chalk.blue(
+          `🚀 Downloading ${options.audio ? "audio" : "video"} from: ${url}`
+        )
+      );
       await downloadYoutube({
         url,
         audioOnly: options.audio,
