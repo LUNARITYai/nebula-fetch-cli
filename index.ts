@@ -6,6 +6,7 @@ import { version } from "./package.json";
 import chalk from "chalk";
 
 import { downloadYoutube } from "@/commands/youtube";
+import { isValidYoutubeUrl } from "./utils/validators";
 
 const program = new Command();
 
@@ -24,7 +25,16 @@ program
   .option("-v, --verbose", "Show verbose output", false)
   .action(async (url, options) => {
     try {
-      console.log(chalk.blue(`Downloading video from: ${url}`));
+      if (!isValidYoutubeUrl(url)) {
+        console.error(
+          chalk.red(
+            "Error: Invalid YouTube URL. Please provide a valid YouTube video URL"
+          )
+        );
+        process.exit(1);
+      }
+
+      console.log(chalk.blue(`🚀 Downloading video from: ${url}`));
       await downloadYoutube({
         url,
         audioOnly: options.audio,
@@ -37,4 +47,7 @@ program
     }
   });
 
-program.parse();
+program.parseAsync().catch((error) => {
+  console.error(chalk.red("Fatal error:"), error);
+  process.exit(1);
+});

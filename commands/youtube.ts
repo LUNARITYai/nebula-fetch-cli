@@ -15,19 +15,15 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
   const { url, audioOnly = false, verbose = false, outputPath } = options;
 
   try {
-    if (!url) {
-      throw new Error("Please provide a YouTube URL");
-    }
-
     console.log(chalk.cyan("🔍 Fetching video information..."));
     const ytdl = new YtdlCore({});
     let videoTitle = "";
 
     await ytdl.getBasicInfo(url).then((info) => {
-      console.log(chalk.cyan(`🎥 Video title: ${info.videoDetails.title}`));
+      console.log(chalk.cyan(`🎬 Video title: ${info.videoDetails.title}`));
       console.log(
         chalk.cyan(
-          `🎥 Video author: ${info.videoDetails.author?.name || "Unknown"}`
+          `🎬 Video author: ${info.videoDetails.author?.name || "Unknown"}`
         )
       );
       if (verbose) {
@@ -46,11 +42,10 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
       path.join(process.cwd(), `${videoTitle}.${audioOnly ? "mp3" : "mp4"}`);
     toPipeableStream(stream).pipe(fs.createWriteStream(outputFilePath));
 
-    console.log(chalk.cyan(`✅ Download finished: ${outputFilePath}`));
+    console.log(chalk.green.bold(`✅ Download finished: ${outputFilePath}`));
   } catch (error) {
     if (error instanceof Error) {
-      console.error(chalk.red("❌ Error:", error.message));
+      console.error(chalk.red.bold("❌ Error:", error.message));
     }
-    throw error;
   }
 }
