@@ -4,8 +4,9 @@ import path from "path";
 import { YtdlCore, toPipeableStream } from "@ybd-project/ytdl-core";
 import chalk from "chalk";
 
-export async function downloadYoutubeAudio(
+export async function downloadYoutube(
   url: string,
+  onlyAudio: boolean = false,
   outputPath?: string
 ): Promise<void> {
   try {
@@ -22,17 +23,18 @@ export async function downloadYoutubeAudio(
     });
 
     const stream = await ytdl.download(url, {
-      filter: "audioonly",
+      filter: onlyAudio ? "audioonly" : undefined,
     });
 
     const outputFilePath =
-      outputPath || path.join(process.cwd(), `${videoTitle}.mp3`);
+      outputPath ||
+      path.join(process.cwd(), `${videoTitle}.${onlyAudio ? "mp3" : "mp4"}`);
     toPipeableStream(stream).pipe(fs.createWriteStream(outputFilePath));
 
-    console.log(chalk.green(`✅ Download finished: ${outputFilePath}`));
+    console.log(chalk.cyan(`✅ Download finished: ${outputFilePath}`));
   } catch (error) {
     if (error instanceof Error) {
-      console.error(chalk.red("Error:", error.message));
+      console.error(chalk.red("❌ Error:", error.message));
     }
     throw error;
   }

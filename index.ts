@@ -4,7 +4,7 @@ import { Command } from "commander";
 import { version } from "./package.json";
 
 import chalk from "chalk";
-import { downloadYoutubeAudio } from "./commands/youtube";
+import { downloadYoutube } from "./commands/youtube";
 
 const program = new Command();
 
@@ -15,13 +15,15 @@ program
 
 program
   .command("youtube")
+  .alias("yt")
   .description("Download a video from YouTube")
   .argument("<url>", "URL of the video")
   .option("-o, --output <path>", "Output path for the video")
+  .option("-a, --audio", "Download only the audio", false)
   .action(async (url, options) => {
     try {
       console.log(chalk.blue(`Downloading video from: ${url}`));
-      await downloadYoutubeAudio(url, options.output);
+      await downloadYoutube(url, options.audio, options.output);
     } catch (error) {
       console.error(chalk.red("Error:"), error);
       process.exit(1);
