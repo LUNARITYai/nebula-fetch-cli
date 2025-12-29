@@ -16,7 +16,9 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
 
   try {
     console.log(chalk.cyan("🔍 Fetching video information..."));
-    const ytdl = new YtdlCore({});
+    const ytdl = new YtdlCore({
+      clients: ["web", "android", "ios"],
+    });
     let videoTitle = "";
 
     await ytdl.getBasicInfo(url).then((info) => {
