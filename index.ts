@@ -19,16 +19,20 @@ program
   .command("youtube")
   .alias("yt")
   .description("Download a video from YouTube")
-  .argument("<url>", "URL of the video")
+  .argument("<urls...>", "URLs of the videos")
   .option("-o, --output <path>", "Output path for the video")
   .option("-a, --audio", "Download only the audio", false)
   .option("-v, --verbose", "Show verbose output", false)
-  .action(async (url, options) => {
+  .action(async (urls: string[], options) => {
     try {
-      if (!isValidYoutubeUrl(url)) {
+      const invalidUrls = urls.filter((url) => !isValidYoutubeUrl(url));
+
+      if (invalidUrls.length > 0) {
         console.error(
           chalk.red(
-            "Error: Invalid YouTube URL. Please provide a valid YouTube video URL"
+            `Error: The following URLs are invalid:\n${invalidUrls.join(
+              "\n"
+            )}\nPlease provide valid YouTube video URLs`
           )
         );
         process.exit(1);
@@ -36,15 +40,25 @@ program
 
       console.log(
         chalk.blue(
-          `🚀 Downloading ${options.audio ? "audio" : "video"} from: ${url}`
+          `🚀 Starting download for ${urls.length} ${
+            urls.length === 1 ? "video" : "videos"
+          }...`
         )
       );
-      await downloadYoutube({
-        url,
-        audioOnly: options.audio,
-        outputPath: options.output,
-        verbose: options.verbose,
-      });
+
+      const downloadPromises = urls.map((url) =>
+        downloadYoutube({
+          url,
+          audioOnly: options.audio,
+          outputPath: options.output,
+          verbose: options.verbose,
+        }).catch((err) => {
+          console.error(chalk.red(`Failed to download ${url}:`), err);
+        })
+      );
+
+      await Promise.all(downloadPromises);
+      console.log(chalk.green.bold("\n✨ All downloads processed!"));
     } catch (error) {
       console.error(chalk.red("Error:"), error);
       process.exit(1);

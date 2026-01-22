@@ -1,6 +1,6 @@
 {
   "name": "@lunarity/nebula-fetch-cli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "module": "index.ts",
   "description": "CLI tool for downloading media from different platforms",
   "type": "module",
@@ -12,7 +12,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@ybd-project/ytdl-core": "^6.0.8",
+    "@ybd-project/ytdl-core": "6.0.8",
     "chalk": "^5.3.0",
     "commander": "^12.1.0"
   },

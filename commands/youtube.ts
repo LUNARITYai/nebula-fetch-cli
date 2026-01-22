@@ -36,12 +36,30 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
 
     const stream = await ytdl.download(url, {
       filter: audioOnly ? "audioonly" : "videoandaudio",
-      quality: "highest",
+      ...(audioOnly ? {} : { quality: "highest" }),
     });
 
-    const outputFilePath =
-      outputPath ||
-      path.join(process.cwd(), `${videoTitle}.${audioOnly ? "mp3" : "mp4"}`);
+    const fileName = `${videoTitle}.${audioOnly ? "mp3" : "mp4"}`;
+    let outputFilePath: string;
+
+    if (outputPath) {
+      const isDirectory =
+        (fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()) ||
+        outputPath.endsWith(path.sep) ||
+        outputPath.endsWith("/");
+
+      if (isDirectory) {
+        if (!fs.existsSync(outputPath)) {
+          fs.mkdirSync(outputPath, { recursive: true });
+        }
+        outputFilePath = path.join(outputPath, fileName);
+      } else {
+        outputFilePath = outputPath;
+      }
+    } else {
+      outputFilePath = path.join(process.cwd(), fileName);
+    }
+
     toPipeableStream(stream).pipe(fs.createWriteStream(outputFilePath));
 
     console.log(chalk.green.bold(`✅ Download finished: ${outputFilePath}`));
