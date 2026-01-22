@@ -184,3 +184,6 @@ dist
 
 # build
 dist
+
+# ytdl artifacts
+*-player-script.js
