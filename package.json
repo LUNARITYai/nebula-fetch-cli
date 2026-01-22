@@ -1,6 +1,6 @@
 {
   "name": "@lunarity/nebula-fetch-cli",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "module": "index.ts",
   "description": "CLI tool for downloading media from different platforms",
   "type": "module",
