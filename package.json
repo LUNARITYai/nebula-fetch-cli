@@ -12,9 +12,10 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@ybd-project/ytdl-core": "^6.0.8",
     "chalk": "^5.3.0",
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "debug": "^4.4.3",
+    "youtube-dl-exec": "^3.0.30"
   },
   "bin": {
     "nebula-fetch": "./dist/index.js"
@@ -35,5 +36,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LUNARITYai/nebula-fetch-cli.git"
-  }
+  },
+  "trustedDependencies": [
+    "youtube-dl-exec"
+  ]
 }
