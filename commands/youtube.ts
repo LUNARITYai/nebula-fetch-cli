@@ -1,8 +1,6 @@
-import fs from "fs";
 import path from "path";
-
-import { YtdlCore, toPipeableStream } from "@ybd-project/ytdl-core";
 import chalk from "chalk";
+import youtubeDl from "youtube-dl-exec";
 
 interface DownloadOptions {
   url: string;
@@ -16,38 +14,53 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
 
   try {
     console.log(chalk.cyan("🔍 Fetching video information..."));
-    const ytdl = new YtdlCore({
-      clients: ["web", "android", "ios"],
-    });
-    let videoTitle = "";
 
-    await ytdl.getBasicInfo(url).then((info) => {
-      console.log(chalk.cyan(`🎬 Video title: ${info.videoDetails.title}`));
-      console.log(
-        chalk.cyan(
-          `🎬 Video author: ${info.videoDetails.author?.name || "Unknown"}`
-        )
-      );
-      if (verbose) {
-        console.log(JSON.stringify(info.videoDetails, null, 2));
-      }
-      videoTitle = info.videoDetails.title.replace(/[^\w\s]/gi, "_");
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const info: any = await youtubeDl(url, {
+      dumpSingleJson: true,
+      noWarnings: true,
+      noCallHome: true,
+      skipDownload: true,
+    } as any);
 
-    const stream = await ytdl.download(url, {
-      filter: audioOnly ? "audioonly" : "videoandaudio",
-      quality: "highest",
-    });
+    const title = info.title;
+    const author = info.uploader;
 
-    const outputFilePath =
-      outputPath ||
-      path.join(process.cwd(), `${videoTitle}.${audioOnly ? "mp3" : "mp4"}`);
-    toPipeableStream(stream).pipe(fs.createWriteStream(outputFilePath));
+    console.log(chalk.cyan(`🎬 Video title: ${title}`));
+    console.log(chalk.cyan(`🎬 Video author: ${author || "Unknown"}`));
 
-    console.log(chalk.green.bold(`✅ Download finished: ${outputFilePath}`));
+    if (verbose) {
+      console.log(JSON.stringify(info, null, 2));
+    }
+
+    const safeTitle = title.replace(/[^\w\s]/gi, "_");
+    const ext = audioOnly ? "mp3" : "mp4";
+    const finalOutputPath =
+      outputPath || path.join(process.cwd(), `${safeTitle}.${ext}`);
+
+    console.log(chalk.blue(`⬇️  Downloading to: ${finalOutputPath}`));
+
+    const downloadFlags: any = {
+      output: finalOutputPath,
+      noWarnings: true,
+      noCallHome: true,
+    };
+
+    if (audioOnly) {
+      downloadFlags.extractAudio = true;
+      downloadFlags.audioFormat = "mp3";
+    } else {
+      downloadFlags.format = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best";
+    }
+
+    await youtubeDl(url, downloadFlags);
+
+    console.log(chalk.green.bold(`✅ Download finished: ${finalOutputPath}`));
   } catch (error) {
     if (error instanceof Error) {
       console.error(chalk.red.bold("❌ Error:", error.message));
+    } else {
+      console.error(chalk.red.bold("❌ An unknown error occurred"));
     }
   }
 }

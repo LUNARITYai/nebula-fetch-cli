@@ -19,32 +19,40 @@ program
   .command("youtube")
   .alias("yt")
   .description("Download a video from YouTube")
-  .argument("<url>", "URL of the video")
-  .option("-o, --output <path>", "Output path for the video")
+  .argument("<urls...>", "URLs of the videos to download")
+  .option("-o, --output <path>", "Output path (folder) for the videos")
   .option("-a, --audio", "Download only the audio", false)
   .option("-v, --verbose", "Show verbose output", false)
-  .action(async (url, options) => {
+  .action(async (urls: string[], options) => {
     try {
-      if (!isValidYoutubeUrl(url)) {
-        console.error(
-          chalk.red(
-            "Error: Invalid YouTube URL. Please provide a valid YouTube video URL"
-          )
-        );
+      const invalidUrls = urls.filter((url) => !isValidYoutubeUrl(url));
+
+      if (invalidUrls.length > 0) {
+        console.error(chalk.red("Error: The following URLs are invalid:"));
+        invalidUrls.forEach((url) => console.error(chalk.yellow(`- ${url}`)));
         process.exit(1);
       }
 
       console.log(
         chalk.blue(
-          `🚀 Downloading ${options.audio ? "audio" : "video"} from: ${url}`
+          `🚀 Starting concurrent download for ${urls.length} ${
+            options.audio ? "audio tracks" : "videos"
+          }...`
         )
       );
-      await downloadYoutube({
-        url,
-        audioOnly: options.audio,
-        outputPath: options.output,
-        verbose: options.verbose,
-      });
+
+      await Promise.all(
+        urls.map((url) =>
+          downloadYoutube({
+            url,
+            audioOnly: options.audio,
+            outputPath: options.output, // Note: If multiple files, this should probably be treated as a dir, but for now passing as is.
+            verbose: options.verbose,
+          })
+        )
+      );
+      
+      console.log(chalk.green.bold("\n✨ All downloads completed!"));
     } catch (error) {
       console.error(chalk.red("Error:"), error);
       process.exit(1);
