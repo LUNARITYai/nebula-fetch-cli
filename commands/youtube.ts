@@ -19,7 +19,6 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
     const info: any = await youtubeDl(url, {
       dumpSingleJson: true,
       noWarnings: true,
-      noCallHome: true,
       skipDownload: true,
     } as any);
 
@@ -35,15 +34,30 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
 
     const safeTitle = title.replace(/[^\w\s]/gi, "_");
     const ext = audioOnly ? "mp3" : "mp4";
-    const finalOutputPath =
-      outputPath || path.join(process.cwd(), `${safeTitle}.${ext}`);
+    
+    let finalOutputPath: string;
+    if (outputPath) {
+      // If outputPath is an existing directory, put the file inside it
+      // Otherwise, treat it as a file path
+      try {
+        const stats = await import("fs/promises").then(fs => fs.stat(outputPath));
+        if (stats.isDirectory()) {
+          finalOutputPath = path.join(outputPath, `${safeTitle}.${ext}`);
+        } else {
+          finalOutputPath = outputPath;
+        }
+      } catch {
+        finalOutputPath = outputPath;
+      }
+    } else {
+      finalOutputPath = path.join(process.cwd(), `${safeTitle}.${ext}`);
+    }
 
     console.log(chalk.blue(`⬇️  Downloading to: ${finalOutputPath}`));
 
     const downloadFlags: any = {
       output: finalOutputPath,
       noWarnings: true,
-      noCallHome: true,
     };
 
     if (audioOnly) {
