@@ -6,7 +6,8 @@ import { version } from "@/package.json";
 import chalk from "chalk";
 
 import { downloadYoutube } from "@/commands/youtube";
-import { isValidYoutubeUrl } from "@/utils/validators";
+import { scrapeWebPage } from "@/commands/scrape";
+import { isValidYoutubeUrl, isValidHttpUrl } from "@/utils/validators";
 
 const program = new Command();
 
@@ -53,6 +54,60 @@ program
       );
       
       console.log(chalk.green.bold("\n✨ All downloads completed!"));
+    } catch (error) {
+      console.error(chalk.red("Error:"), error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("scrape")
+  .alias("sc")
+  .description("Scrape and save web page content")
+  .argument("<urls...>", "URLs of the pages to scrape")
+  .option("-o, --output <path>", "Output path (folder or file)")
+  .option("-f, --format <format>", "Output format (md, json, txt, html)", "md")
+  .option("--full", "Extract full metadata (meta tags, headings, links, images)", false)
+  .option("-v, --verbose", "Show verbose output", false)
+  .action(async (urls: string[], options) => {
+    try {
+      const validFormats = ["md", "json", "txt", "html"];
+      if (!validFormats.includes(options.format)) {
+        console.error(
+          chalk.red(
+            `Error: Invalid format "${options.format}". Choose from: ${validFormats.join(", ")}`
+          )
+        );
+        process.exit(1);
+      }
+
+      const invalidUrls = urls.filter((url) => !isValidHttpUrl(url));
+
+      if (invalidUrls.length > 0) {
+        console.error(chalk.red("Error: The following URLs are invalid:"));
+        invalidUrls.forEach((url) => console.error(chalk.yellow(`- ${url}`)));
+        process.exit(1);
+      }
+
+      console.log(
+        chalk.blue(
+          `🚀 Starting scrape for ${urls.length} URL${urls.length > 1 ? "s" : ""}...`
+        )
+      );
+
+      await Promise.all(
+        urls.map((url) =>
+          scrapeWebPage({
+            url,
+            format: options.format,
+            fullMode: options.full,
+            verbose: options.verbose,
+            outputPath: options.output,
+          })
+        )
+      );
+
+      console.log(chalk.green.bold("\n✨ All scraping completed!"));
     } catch (error) {
       console.error(chalk.red("Error:"), error);
       process.exit(1);
