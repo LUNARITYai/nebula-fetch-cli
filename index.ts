@@ -5,9 +5,9 @@ import { version } from "@/package.json";
 
 import chalk from "chalk";
 
-import { downloadYoutube } from "@/commands/youtube";
+import { downloadYoutube, resolvePlaylistUrls } from "@/commands/youtube";
 import { scrapeWebPage } from "@/commands/scrape";
-import { isValidYoutubeUrl, isValidHttpUrl } from "@/utils/validators";
+import { isValidYoutubeUrl, isValidHttpUrl, isYoutubePlaylistUrl } from "@/utils/validators";
 
 const program = new Command();
 
@@ -26,6 +26,7 @@ program
   .option("-v, --verbose", "Show verbose output", false)
   .action(async (urls: string[], options) => {
     try {
+      // Validate all input URLs first
       const invalidUrls = urls.filter((url) => !isValidYoutubeUrl(url));
 
       if (invalidUrls.length > 0) {
@@ -34,25 +35,54 @@ program
         process.exit(1);
       }
 
+      // Separate playlist URLs from single video URLs
+      const playlistUrls = urls.filter((url) => isYoutubePlaylistUrl(url));
+      const videoUrls = urls.filter((url) => !isYoutubePlaylistUrl(url));
+
+      // Resolve playlists into individual video URLs
+      for (const playlistUrl of playlistUrls) {
+        try {
+          console.log(chalk.cyan("📋 Resolving playlist..."));
+          const playlist = await resolvePlaylistUrls(playlistUrl);
+          console.log(
+            chalk.cyan(
+              `📋 Playlist: ${playlist.title} (${playlist.urls.length} videos)`
+            )
+          );
+          videoUrls.push(...playlist.urls);
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : "Unknown error";
+          console.error(
+            chalk.red(`❌ Failed to resolve playlist: ${msg}`)
+          );
+          process.exit(1);
+        }
+      }
+
+      if (videoUrls.length === 0) {
+        console.error(chalk.red("Error: No videos found to download."));
+        process.exit(1);
+      }
+
       console.log(
         chalk.blue(
-          `🚀 Starting concurrent download for ${urls.length} ${
+          `🚀 Starting concurrent download for ${videoUrls.length} ${
             options.audio ? "audio tracks" : "videos"
           }...`
         )
       );
 
       await Promise.all(
-        urls.map((url) =>
+        videoUrls.map((url) =>
           downloadYoutube({
             url,
             audioOnly: options.audio,
-            outputPath: options.output, // Note: If multiple files, this should probably be treated as a dir, but for now passing as is.
+            outputPath: options.output,
             verbose: options.verbose,
           })
         )
       );
-      
+
       console.log(chalk.green.bold("\n✨ All downloads completed!"));
     } catch (error) {
       console.error(chalk.red("Error:"), error);
