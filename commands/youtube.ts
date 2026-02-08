@@ -2,6 +2,27 @@ import path from "path";
 import chalk from "chalk";
 import youtubeDl from "youtube-dl-exec";
 
+interface PlaylistInfo {
+  title: string;
+  urls: string[];
+}
+
+export async function resolvePlaylistUrls(url: string): Promise<PlaylistInfo> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const info: any = await youtubeDl(url, {
+    flatPlaylist: true,
+    dumpSingleJson: true,
+    noWarnings: true,
+  } as any);
+
+  const title: string = info.title || "Unknown Playlist";
+  const urls: string[] = (info.entries || []).map(
+    (entry: any) => `https://www.youtube.com/watch?v=${entry.id}`
+  );
+
+  return { title, urls };
+}
+
 interface DownloadOptions {
   url: string;
   audioOnly?: boolean;
