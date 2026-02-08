@@ -43,3 +43,12 @@ export function isValidYoutubeUrl(url: string): boolean {
     return false;
   }
 }
+
+export function isValidHttpUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
