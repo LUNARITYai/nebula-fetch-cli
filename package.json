@@ -1,18 +1,17 @@
 {
   "name": "@lunarity/nebula-fetch-cli",
   "version": "0.0.3",
-  "module": "index.ts",
   "description": "CLI tool for downloading media from different platforms",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/turndown": "^5.0.6",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@types/turndown": "^5.0.6",
     "chalk": "^5.3.0",
     "cheerio": "^1.2.0",
     "commander": "^12.1.0",
@@ -21,12 +20,12 @@
     "youtube-dl-exec": "^3.0.30"
   },
   "bin": {
-    "nebula-fetch": "./dist/index.js"
+    "nebula-fetch": "./dist/index.cjs"
   },
   "scripts": {
-    "build": "bun build ./index.ts --outdir ./dist --target node && chmod +x ./dist/index.js",
-    "dev": "bun index.ts",
-    "prepublish": "bun run build"
+    "build": "tsup && chmod +x ./dist/index.cjs",
+    "dev": "tsx index.ts",
+    "prepublish": "pnpm run build"
   },
   "keywords": [
     "cli",
@@ -40,7 +39,10 @@
     "type": "git",
     "url": "git+https://github.com/LUNARITYai/nebula-fetch-cli.git"
   },
-  "trustedDependencies": [
-    "youtube-dl-exec"
-  ]
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "youtube-dl-exec"
+    ]
+  }
 }
