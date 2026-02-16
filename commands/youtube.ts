@@ -31,11 +31,11 @@ export async function resolvePlaylistUrls(url: string): Promise<PlaylistInfo> {
     noWarnings: true,
   };
 
-  const info = await youtubeDl(url, options) as YoutubeDlInfo;
+  const info = (await youtubeDl(url, options)) as YoutubeDlInfo;
 
   const title: string = info.title || "Unknown Playlist";
   const urls: string[] = (info.entries || []).map(
-    (entry) => `https://www.youtube.com/watch?v=${entry.id}`
+    (entry) => `https://www.youtube.com/watch?v=${entry.id}`,
   );
 
   return { title, urls };
@@ -60,7 +60,7 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
       skipDownload: true,
     };
 
-    const info = await youtubeDl(url, infoOptions) as YoutubeDlInfo;
+    const info = (await youtubeDl(url, infoOptions)) as YoutubeDlInfo;
 
     const title = info.title;
     const author = info.uploader;
@@ -74,13 +74,15 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
 
     const safeTitle = title.replace(/[^\w\s]/gi, "_");
     const ext = audioOnly ? "mp3" : "mp4";
-    
+
     let finalOutputPath: string;
     if (outputPath) {
       // If outputPath is an existing directory, put the file inside it
       // Otherwise, treat it as a file path
       try {
-        const stats = await import("fs/promises").then(fs => fs.stat(outputPath));
+        const stats = await import("fs/promises").then((fs) =>
+          fs.stat(outputPath),
+        );
         if (stats.isDirectory()) {
           finalOutputPath = path.join(outputPath, `${safeTitle}.${ext}`);
         } else {
@@ -104,7 +106,8 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
       downloadFlags.extractAudio = true;
       downloadFlags.audioFormat = "mp3";
     } else {
-      downloadFlags.format = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best";
+      downloadFlags.format =
+        "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best";
     }
 
     await youtubeDl(url, downloadFlags);
