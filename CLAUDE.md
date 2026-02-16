@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**nebula-fetch-cli** is a command-line tool for downloading YouTube videos and audio using Bun runtime. It wraps `youtube-dl-exec` (which requires `yt-dlp` binary installed on the system) and provides a simple interface with concurrent download support.
+**nebula-fetch-cli** is a command-line tool for downloading YouTube videos/audio and scraping web pages, built with Bun. It wraps `youtube-dl-exec` (requires `yt-dlp` installed on the system) and uses `cheerio`/`turndown` for web scraping.
 
 ## Prerequisites
 
@@ -21,6 +21,7 @@ bun run build
 
 # Run built CLI
 ./dist/index.js youtube <url> [options]
+./dist/index.js scrape <url> [options]
 ```
 
 No test or lint scripts are currently configured.
@@ -28,20 +29,25 @@ No test or lint scripts are currently configured.
 ## Architecture
 
 ```
-index.ts                    # CLI entry point - commander.js setup, URL validation
+index.ts                    # CLI entry point - commander.js setup, URL validation, command routing
     ↓
-commands/youtube.ts         # Download logic using youtube-dl-exec
+commands/
+  youtube.ts                # YouTube download logic (single videos + playlist resolution)
+  scrape.ts                 # Web scraping - fetches HTML, extracts content, writes to file
     ↓
-utils/validators.ts         # YouTube URL validation (standard, short, embed, mobile formats)
+utils/
+  validators.ts             # URL validation (YouTube formats, playlist detection, generic HTTP)
+  scrapers.ts               # HTML content extraction with cheerio (main content + full metadata mode)
+  converters.ts             # Output format conversion (md, json, txt, html) using turndown
 ```
 
-**Key flow:**
-1. `index.ts` registers the "youtube" (alias "yt") command with commander
-2. URLs are validated via `isValidYoutubeUrl()` before processing
-3. Multiple URLs are downloaded concurrently with `Promise.all()`
-4. `downloadYoutube()` fetches metadata first (with `dumpSingleJson`), then downloads to output path
+**Key flows:**
+1. `youtube` (alias `yt`): Validates URLs → separates playlists from single videos → resolves playlists via `resolvePlaylistUrls()` (uses `flatPlaylist` + `dumpSingleJson`) → downloads all videos concurrently with `Promise.all()`
+2. `scrape` (alias `sc`): Validates URLs → fetches HTML → extracts content via cheerio (`extractMainContent` or `extractFullContent` for `--full` mode) → converts to output format → writes to file
 
-**CLI options:** `--output` (directory or file path), `--audio` (MP3 extraction), `--verbose` (dumps full metadata JSON)
+**CLI options:**
+- `youtube`: `--output` (directory or file path), `--audio` (MP3 extraction), `--verbose`
+- `scrape`: `--output` (directory or file path), `--format` (md/json/txt/html, default: md), `--full` (extract metadata, headings, links, images), `--verbose`
 
 ## Path Aliases
 
@@ -53,6 +59,7 @@ utils/validators.ts         # YouTube URL validation (standard, short, embed, mo
 - **Language:** TypeScript (strict mode, ESNext target)
 - **CLI Framework:** commander
 - **Download Engine:** youtube-dl-exec (wraps yt-dlp)
+- **Scraping:** cheerio (HTML parsing), turndown (HTML→Markdown)
 - **Styling:** chalk
 - **Logging:** debug
 
