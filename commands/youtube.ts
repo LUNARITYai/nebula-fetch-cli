@@ -1,8 +1,45 @@
-import fs from "fs";
 import path from "path";
-import { YtdlCore } from "@ybd-project/ytdl-core";
 import chalk from "chalk";
-import { Readable } from "stream";
+import youtubeDl from "youtube-dl-exec";
+
+interface YoutubeDlOptions {
+  flatPlaylist?: boolean;
+  dumpSingleJson?: boolean;
+  noWarnings?: boolean;
+  skipDownload?: boolean;
+  output?: string;
+  extractAudio?: boolean;
+  audioFormat?: string;
+  format?: string;
+}
+
+interface YoutubeDlInfo {
+  title?: string;
+  uploader?: string;
+  entries?: Array<{ id: string }>;
+}
+
+interface PlaylistInfo {
+  title: string;
+  urls: string[];
+}
+
+export async function resolvePlaylistUrls(url: string): Promise<PlaylistInfo> {
+  const options: YoutubeDlOptions = {
+    flatPlaylist: true,
+    dumpSingleJson: true,
+    noWarnings: true,
+  };
+
+  const info = (await youtubeDl(url, options)) as YoutubeDlInfo;
+
+  const title: string = info.title || "Unknown Playlist";
+  const urls: string[] = (info.entries || []).map(
+    (entry) => `https://www.youtube.com/watch?v=${entry.id}`,
+  );
+
+  return { title, urls };
+}
 
 interface DownloadOptions {
   url: string;
@@ -16,141 +53,72 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
 
   try {
     console.log(chalk.cyan("🔍 Fetching video information..."));
-    // Use all clients to maximize chances of finding a working one
-    const ytdl = new YtdlCore({
-      clients: ["web", "android", "ios", "tv", "mweb"],
-    });
-    
-    const info = await ytdl.getFullInfo(url);
-    
-    console.log(chalk.cyan(`🎬 Video title: ${info.videoDetails.title}`));
-    console.log(
-      chalk.cyan(
-        `🎬 Video author: ${info.videoDetails.author?.name || "Unknown"}`
-      )
-    );
+
+    const infoOptions: YoutubeDlOptions = {
+      dumpSingleJson: true,
+      noWarnings: true,
+      skipDownload: true,
+    };
+
+    const info = (await youtubeDl(url, infoOptions)) as YoutubeDlInfo;
+
+    const title = info.title;
+    const author = info.uploader;
+
+    console.log(chalk.cyan(`🎬 Video title: ${title}`));
+    console.log(chalk.cyan(`🎬 Video author: ${author || "Unknown"}`));
 
     if (verbose) {
-      console.log(JSON.stringify(info.videoDetails, null, 2));
-    }
-    
-    const videoTitle = info.videoDetails.title.replace(/[^\w\s]/gi, "_");
-
-    // Filter to only valid (deciphered) formats
-    let validFormats = info.formats.filter(f => f.url);
-
-    if (validFormats.length === 0) {
-       throw new Error("No downloadable formats found (signatures could not be deciphered).");
+      console.log(JSON.stringify(info, null, 2));
     }
 
-    if (verbose) {
-        console.log(`Found ${info.formats.length} total formats, ${validFormats.length} valid (deciphered).`);
-    }
+    const safeTitle = (title ?? "video").replace(/[^\w\s]/gi, "_");
+    const ext = audioOnly ? "mp3" : "mp4";
 
-    // Sort based on preference to try best ones first
-    validFormats.sort((a, b) => {
-        if (audioOnly) {
-            const aAudio = a.hasAudio && !a.hasVideo;
-            const bAudio = b.hasAudio && !b.hasVideo;
-            if (aAudio && !bAudio) return -1;
-            if (!aAudio && bAudio) return 1;
-            return (b.audioBitrate || 0) - (a.audioBitrate || 0);
+    let finalOutputPath: string;
+    if (outputPath) {
+      // If outputPath is an existing directory, put the file inside it
+      // Otherwise, treat it as a file path
+      try {
+        const stats = await import("fs/promises").then((fs) =>
+          fs.stat(outputPath),
+        );
+        if (stats.isDirectory()) {
+          finalOutputPath = path.join(outputPath, `${safeTitle}.${ext}`);
         } else {
-             const aMuxed = a.hasAudio && a.hasVideo;
-             const bMuxed = b.hasAudio && b.hasVideo;
-             if (aMuxed && !bMuxed) return -1;
-             if (!aMuxed && bMuxed) return 1;
-             return (b.bitrate || 0) - (a.bitrate || 0);
+          finalOutputPath = outputPath;
         }
-    });
-
-    let workingFormat = null;
-    let workingUrl = "";
-    let finalUserAgent = "";
-
-    console.log(chalk.yellow("🔄 Testing formats to find a valid one..."));
-
-    for (const format of validFormats) {
-        let downloadUrl = format.url;
-        if (info.poToken && !downloadUrl.includes('pot=')) {
-            downloadUrl += `&pot=${encodeURIComponent(info.poToken)}`;
-        }
-
-        // Determine User-Agent
-        let userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36';
-        if (format.sourceClientName === 'ios') {
-            userAgent = 'com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X; en_US)';
-        } else if (format.sourceClientName === 'android') {
-            userAgent = 'com.google.android.youtube/19.29.35 (Linux; U; Android 14; en_US) gzip';
-        } else if (format.sourceClientName === 'tv') {
-            userAgent = 'Mozilla/5.0 (ChromiumNet/53.0.2785.124) Cobalt/53.0.2785.124-devel-000000-000 Star/1.0';
-        }
-
-        try {
-            const response = await fetch(downloadUrl, {
-                method: 'HEAD',
-                headers: {
-                    'User-Agent': userAgent,
-                    'Referer': 'https://www.youtube.com/',
-                }
-            });
-
-            if (response.ok) {
-                workingFormat = format;
-                workingUrl = downloadUrl;
-                finalUserAgent = userAgent;
-                if (verbose) console.log(chalk.green(`  ✅ Found working format: ${format.itag} (${format.sourceClientName})`));
-                break;
-            } else {
-                if (verbose) console.log(chalk.red(`  ❌ Format ${format.itag} (${format.sourceClientName}) failed: ${response.status}`));
-            }
-        } catch (e) {
-            if (verbose) console.log(chalk.red(`  ❌ Format ${format.itag} error: ${e}`));
-        }
-    }
-
-    if (!workingFormat || !workingUrl) {
-        throw new Error("Could not find any valid downloadable format (all returned 403/Error).");
-    }
-
-    console.log(chalk.blue(`⬇️ Downloading format: ${workingFormat.container} | ${workingFormat.qualityLabel || 'Audio'} | ${workingFormat.audioBitrate || '?'}kbps | Client: ${workingFormat.sourceClientName}`));
-
-    // Direct download bypass
-    const response = await fetch(workingUrl, {
-        headers: {
-            'User-Agent': finalUserAgent,
-            'Referer': 'https://www.youtube.com/',
-        }
-    });
-
-    if (!response.ok || !response.body) {
-        throw new Error(`Failed to download video stream: ${response.status} ${response.statusText}`);
-    }
-
-    const outputFilePath =
-      outputPath ||
-      path.join(process.cwd(), `${videoTitle}.${audioOnly ? "mp3" : "mp4"}`);
-    
-    const fileStream = fs.createWriteStream(outputFilePath);
-    
-    // Convert Web ReadableStream to Node Readable Stream
-    // @ts-ignore
-    const nodeStream = Readable.fromWeb(response.body);
-    
-    await new Promise<void>((resolve, reject) => {
-        nodeStream.pipe(fileStream);
-        nodeStream.on('error', reject);
-        fileStream.on('finish', resolve);
-        fileStream.on('error', reject);
-    });
-
-    console.log(chalk.green.bold(`✅ Download finished: ${outputFilePath}`));
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(chalk.red.bold("❌ Error:", error.message));
-      if (verbose && error.stack) {
-        console.error(error.stack);
+      } catch {
+        finalOutputPath = outputPath;
       }
+    } else {
+      finalOutputPath = path.join(process.cwd(), `${safeTitle}.${ext}`);
     }
+
+    console.log(chalk.blue(`⬇️  Downloading to: ${finalOutputPath}`));
+
+    const downloadFlags: YoutubeDlOptions = {
+      output: finalOutputPath,
+      noWarnings: true,
+    };
+
+    if (audioOnly) {
+      downloadFlags.extractAudio = true;
+      downloadFlags.audioFormat = "mp3";
+    } else {
+      downloadFlags.format =
+        "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best";
+    }
+
+    await youtubeDl(url, downloadFlags);
+
+    console.log(chalk.green.bold(`✅ Download finished: ${finalOutputPath}`));
+  } catch (error) {
+    const msg =
+      error instanceof Error
+        ? error.message || String(error)
+        : String(error);
+    console.error(chalk.red.bold(`❌ Error downloading ${url}: ${msg}`));
+    throw error;
   }
 }

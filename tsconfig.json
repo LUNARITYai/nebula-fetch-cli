@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     // Enable latest features
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
-    "jsx": "react-jsx",
     "allowJs": true,
+    "resolveJsonModule": true,
 
     // Bundler mode
     "moduleResolution": "bundler",
@@ -28,5 +28,6 @@
     "paths": {
       "@/*": ["./*"]
     }
-  }
+  },
+  "exclude": ["dist", "node_modules"]
 }

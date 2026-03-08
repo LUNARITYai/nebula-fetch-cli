@@ -58,6 +58,7 @@ build/Release
 
 node_modules/
 jspm_packages/
+.pnpm-store/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 
@@ -181,6 +182,13 @@ dist
 *.webm
 *.ogg
 *.wav
+*.part
+
+# downloads
+downloads/
+
+# scraped files
+*.html
 
 # build
 dist
