@@ -1,6 +1,6 @@
 {
   "name": "@lunarity/nebula-fetch-cli",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "CLI tool for downloading media from different platforms",
   "type": "module",
   "main": "dist/index.cjs",
@@ -15,23 +15,31 @@
     "chalk": "^5.3.0",
     "cheerio": "^1.2.0",
     "commander": "^12.1.0",
-    "debug": "^4.4.3",
+
     "turndown": "^7.2.2",
     "youtube-dl-exec": "^3.0.30"
   },
+  "files": [
+    "dist"
+  ],
   "bin": {
     "nebula-fetch": "./dist/index.cjs"
   },
   "scripts": {
     "build": "tsup && chmod +x ./dist/index.cjs",
     "dev": "tsx index.ts",
-    "prepublish": "pnpm run build"
+    "prepublishOnly": "pnpm run build"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "keywords": [
     "cli",
     "media",
     "download",
-    "youtube"
+    "youtube",
+    "scrape",
+    "yt-dlp"
   ],
   "author": "Krzysztof Oszczapiński",
   "license": "MIT",

@@ -90,7 +90,7 @@ export function extractFullContent(
 
   const headings: { level: number; text: string }[] = [];
   $("h1, h2, h3, h4, h5, h6").each((_, el) => {
-    const tag = (el as cheerio.Element).tagName;
+    const tag = (el as unknown as { tagName: string }).tagName;
     headings.push({
       level: parseInt(tag[1]),
       text: $(el).text().trim(),

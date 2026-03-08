@@ -28,5 +28,6 @@
     "paths": {
       "@/*": ["./*"]
     }
-  }
+  },
+  "exclude": ["dist", "node_modules"]
 }

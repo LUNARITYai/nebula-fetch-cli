@@ -72,7 +72,7 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
       console.log(JSON.stringify(info, null, 2));
     }
 
-    const safeTitle = title.replace(/[^\w\s]/gi, "_");
+    const safeTitle = (title ?? "video").replace(/[^\w\s]/gi, "_");
     const ext = audioOnly ? "mp3" : "mp4";
 
     let finalOutputPath: string;
@@ -114,10 +114,11 @@ export async function downloadYoutube(options: DownloadOptions): Promise<void> {
 
     console.log(chalk.green.bold(`✅ Download finished: ${finalOutputPath}`));
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(chalk.red.bold("❌ Error:", error.message));
-    } else {
-      console.error(chalk.red.bold("❌ An unknown error occurred"));
-    }
+    const msg =
+      error instanceof Error
+        ? error.message || String(error)
+        : String(error);
+    console.error(chalk.red.bold(`❌ Error downloading ${url}: ${msg}`));
+    throw error;
   }
 }
