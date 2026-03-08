@@ -72,7 +72,7 @@ program
         )
       );
 
-      await Promise.all(
+      const results = await Promise.allSettled(
         videoUrls.map((url) =>
           downloadYoutube({
             url,
@@ -83,7 +83,15 @@ program
         )
       );
 
-      console.log(chalk.green.bold("\n✨ All downloads completed!"));
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length === results.length) {
+        console.error(chalk.red.bold("\n❌ All downloads failed."));
+        process.exit(1);
+      } else if (failed.length > 0) {
+        console.log(chalk.yellow.bold(`\n⚠️  ${results.length - failed.length}/${results.length} downloads completed, ${failed.length} failed.`));
+      } else {
+        console.log(chalk.green.bold("\n✨ All downloads completed!"));
+      }
     } catch (error) {
       console.error(chalk.red("Error:"), error);
       process.exit(1);
@@ -125,7 +133,7 @@ program
         )
       );
 
-      await Promise.all(
+      const results = await Promise.allSettled(
         urls.map((url) =>
           scrapeWebPage({
             url,
@@ -137,7 +145,15 @@ program
         )
       );
 
-      console.log(chalk.green.bold("\n✨ All scraping completed!"));
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length === results.length) {
+        console.error(chalk.red.bold("\n❌ All scraping failed."));
+        process.exit(1);
+      } else if (failed.length > 0) {
+        console.log(chalk.yellow.bold(`\n⚠️  ${results.length - failed.length}/${results.length} scrapes completed, ${failed.length} failed.`));
+      } else {
+        console.log(chalk.green.bold("\n✨ All scraping completed!"));
+      }
     } catch (error) {
       console.error(chalk.red("Error:"), error);
       process.exit(1);

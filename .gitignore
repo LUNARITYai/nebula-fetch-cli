@@ -182,6 +182,13 @@ dist
 *.webm
 *.ogg
 *.wav
+*.part
+
+# downloads
+downloads/
+
+# scraped files
+*.html
 
 # build
 dist

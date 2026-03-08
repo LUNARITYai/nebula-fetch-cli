@@ -91,10 +91,9 @@ export async function scrapeWebPage(options: ScrapeOptions): Promise<void> {
       chalk.green.bold(`✅ Saved to: ${finalOutputPath}`)
     );
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(chalk.red.bold(`❌ Error scraping ${url}: ${error.message}`));
-    } else {
-      console.error(chalk.red.bold(`❌ An unknown error occurred scraping ${url}`));
-    }
+    const msg =
+      error instanceof Error ? error.message : String(error);
+    console.error(chalk.red.bold(`❌ Error scraping ${url}: ${msg}`));
+    throw error;
   }
 }
