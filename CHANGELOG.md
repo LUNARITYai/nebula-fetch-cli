@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Add back `debug` dependency required by `youtube-dl-exec` postinstall
+
 ## 0.1.0
 
 - Add web scraping command (`scrape` / `sc`) with markdown, JSON, text, and HTML output
